@@ -40,13 +40,13 @@ const domainType = [
 		type: "string"
 	},
 	{
-		name: "chainId",
-		type: "uint256"
-	},
-	{
 		name: "verifyingContract",
 		type: "address"
-	}
+	},
+	{
+		name: "salt",
+		type: "bytes32"
+	},
 ];
 
 const metaTransactionType = [
@@ -71,14 +71,14 @@ describe('forwarder test', () => {
 			expect(await impEIP712.valueOne()).to.to.equal('default')
 			await impEIP712.setValueOne('new1')
 			expect(await impEIP712.valueOne()).to.to.equal('new1')
-
+			const { padLeft, numberToHex } = web3.utils
 			const domainData = {
 				name: "TestContract",
 				version: "1",
 				verifyingContract: impEIP712.address,
-				chainId: 31337
+				salt: padLeft(numberToHex(31337), 64)
 			};
-			// const userAddress = owner.address;
+
 			let publicKey = "0x726cDa2Ac26CeE89F645e55b78167203cAE5410E";
 			let privateKey = "0x68619b8adb206de04f676007b2437f99ff6129b672495a6951499c6c56bc2fa6";
 
@@ -129,37 +129,36 @@ describe('forwarder test', () => {
 
 			expect(await impEIP712.valueOne()).to.to.equal(value)
 		})
-		// it('basic', async () => {
-		// 	await reDeploy()
-		// 	expect(await impBasic.valueOne()).to.to.equal('default')
-		// 	await impBasic.setValueOne('new1')
-		// 	expect(await impBasic.valueOne()).to.to.equal('new1')
-		//
-		// 	const contract = new web3.eth.Contract(
-		// 		(require('../artifacts/contracts/ImpBasic.sol/ImpBasic.json')).abi,
-		// 		'',
-		// 	)
-		//
-		// 	const value = 'new2'
-		// 	const functionSignature = contract.methods
-		// 		.setValueOne(value)
-		// 		.encodeABI()
-		//
-		// 	const userAddress = owner.address;
-		//
-		// 	const hashToSign = web3.utils.soliditySha3(
-		// 		{ t: 'uint256', v: '0' },
-		// 		{ t: 'address', v: impBasic.address },
-		// 		{ t: 'uint256', v: '31337' }, // 31337 is hardhat chain id
-		// 		{ t: 'bytes', v: functionSignature },
-		// 	) as string;
-		//
-		// 	const signature = await web3.eth.sign(hashToSign, userAddress)
-		//
-		// 	const { v, r, s }  = ethers.utils.splitSignature(signature)
-		// 	await impBasic.executeMetaTransaction(userAddress, functionSignature, r, s,v);
-		// 	expect(await impBasic.valueOne()).to.to.equal(value)
-		//
-		// })
+		it('basic', async () => {
+			await reDeploy()
+			expect(await impBasic.valueOne()).to.to.equal('default')
+			await impBasic.setValueOne('new1')
+			expect(await impBasic.valueOne()).to.to.equal('new1')
+
+			const contract = new web3.eth.Contract(
+				(require('../artifacts/contracts/ImpBasic.sol/ImpBasic.json')).abi,
+				'',
+			)
+
+			const value = 'new2'
+			const functionSignature = contract.methods
+				.setValueOne(value)
+				.encodeABI()
+
+			const userAddress = owner.address;
+
+			const hashToSign = web3.utils.soliditySha3(
+				{ t: 'uint256', v: '0' },
+				{ t: 'address', v: impBasic.address },
+				{ t: 'uint256', v: '31337' }, // 31337 is hardhat chain id
+				{ t: 'bytes', v: functionSignature },
+			) as string;
+
+			const signature = await web3.eth.sign(hashToSign, userAddress)
+
+			const { v, r, s }  = ethers.utils.splitSignature(signature)
+			await impBasic.executeMetaTransaction(userAddress, functionSignature, r, s,v);
+			expect(await impBasic.valueOne()).to.to.equal(value)
+		})
 	})
 })
